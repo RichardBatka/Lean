@@ -40,6 +40,7 @@ using QuantConnect.Orders.TimeInForces;
 using QuantConnect.Securities.Option;
 using Bar = QuantConnect.Data.Market.Bar;
 using HistoryRequest = QuantConnect.Data.HistoryRequest;
+using QuantConnect.Data.UniverseSelection;
 
 namespace QuantConnect.Brokerages.InteractiveBrokers
 {
@@ -1287,7 +1288,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                 _underlyings.Clear();
             }
 
-            Subscribe(null, subscribedSymbols);
+            Subscribe(subscribedSymbols);
         }
 
         /// <summary>
@@ -2265,43 +2266,23 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
 
         private TimeSpan _brokerTimeDiff = new TimeSpan(0);
 
-
         /// <summary>
-        /// IDataQueueHandler interface implementation
+        /// Adds the specified symbols to the subscription
         /// </summary>
-        ///
-        public IEnumerable<BaseData> GetNextTicks()
+        /// <param name="request">defines the parameters to subscribe to a data feed</param>
+        /// <returns></returns>
+        public IEnumerator<BaseData> Subscribe(SubscriptionRequest request, EventHandler newDataAvailableHandler)
         {
-            Tick[] ticks;
+            Subscribe(new[] { request.Security.Symbol });
 
-            lock (_ticks)
-            {
-                ticks = _ticks.ToArray();
-                _ticks.Clear();
-            }
-
-            foreach (var tick in ticks)
-            {
-                yield return tick;
-
-                lock (_sync)
-                {
-                    if (_underlyings.ContainsKey(tick.Symbol))
-                    {
-                        var underlyingTick = tick.Clone();
-                        underlyingTick.Symbol = _underlyings[tick.Symbol];
-                        yield return underlyingTick;
-                    }
-                }
-            }
+            return null;
         }
 
         /// <summary>
         /// Adds the specified symbols to the subscription
         /// </summary>
-        /// <param name="job">Job we're subscribing for:</param>
         /// <param name="symbols">The symbols to be added keyed by SecurityType</param>
-        public void Subscribe(LiveNodePacket job, IEnumerable<Symbol> symbols)
+        public void Subscribe(IEnumerable<Symbol> symbols)
         {
             try
             {
@@ -2369,9 +2350,17 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
         /// <summary>
         /// Removes the specified symbols to the subscription
         /// </summary>
-        /// <param name="job">Job we're processing.</param>
+        /// <param name="dataConfig">Subscription config to be removed</param>
+        public void Unsubscribe(SubscriptionDataConfig dataConfig)
+        {
+            Unsubscribe(new Symbol[] { dataConfig.Symbol });
+        }
+
+        /// <summary>
+        /// Removes the specified symbols to the subscription
+        /// </summary>
         /// <param name="symbols">The symbols to be removed keyed by SecurityType</param>
-        public void Unsubscribe(LiveNodePacket job, IEnumerable<Symbol> symbols)
+        public void Unsubscribe(IEnumerable<Symbol> symbols)
         {
             try
             {

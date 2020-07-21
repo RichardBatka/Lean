@@ -34,7 +34,7 @@ namespace QuantConnect.Tests.Brokerages.InteractiveBrokers
             {
                 ib.Connect();
 
-                ib.Subscribe(null, new List<Symbol> {Symbols.USDJPY, Symbols.EURGBP});
+                ib.Subscribe(new List<Symbol> {Symbols.USDJPY, Symbols.EURGBP});
 
                 Thread.Sleep(2000);
 
@@ -42,12 +42,7 @@ namespace QuantConnect.Tests.Brokerages.InteractiveBrokers
                 var gotEurData = false;
                 for (int i = 0; i < 20; i++)
                 {
-                    foreach (var tick in ib.GetNextTicks())
-                    {
-                        Console.WriteLine("{0}: {1} - {2} @ {3}", tick.Time, tick.Symbol, tick.Price, ((Tick)tick).Quantity);
-                        gotUsdData |= tick.Symbol == Symbols.USDJPY;
-                        gotEurData |= tick.Symbol == Symbols.EURGBP;
-                    }
+                    
                 }
 
                 Assert.IsTrue(gotUsdData);
@@ -61,32 +56,16 @@ namespace QuantConnect.Tests.Brokerages.InteractiveBrokers
             using (var ib = new InteractiveBrokersBrokerage(new QCAlgorithm(), new OrderProvider(), new SecurityProvider()))
             {
                 ib.Connect();
-                ib.Subscribe(null, new List<Symbol> {Symbols.USDJPY, Symbols.EURGBP});
+                ib.Subscribe(new List<Symbol> {Symbols.USDJPY, Symbols.EURGBP});
                 ib.Disconnect();
                 Thread.Sleep(2000);
-
-                for (var i = 0; i < 20; i++)
-                {
-                    foreach (var tick in ib.GetNextTicks()) // we need to make sure we consumer the already sent data, if any
-                    {
-                        Console.WriteLine("{0}: {1} - {2} @ {3}", tick.Time, tick.Symbol, tick.Price, ((Tick)tick).Quantity);
-                    }
-                }
 
                 ib.Connect();
                 Thread.Sleep(2000);
 
                 var gotUsdData = false;
                 var gotEurData = false;
-                for (var i = 0; i < 20; i++)
-                {
-                    foreach (var tick in ib.GetNextTicks())
-                    {
-                        Console.WriteLine("{0}: {1} - {2} @ {3}", tick.Time, tick.Symbol, tick.Price, ((Tick)tick).Quantity);
-                        gotUsdData |= tick.Symbol == Symbols.USDJPY;
-                        gotEurData |= tick.Symbol == Symbols.EURGBP;
-                    }
-                }
+                
                 Assert.IsTrue(gotUsdData);
                 Assert.IsTrue(gotEurData);
             }
