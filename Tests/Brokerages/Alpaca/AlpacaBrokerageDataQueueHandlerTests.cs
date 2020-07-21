@@ -17,9 +17,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Moq;
 using NUnit.Framework;
 using QuantConnect.Brokerages.Alpaca;
 using QuantConnect.Configuration;
+using QuantConnect.Data;
 using QuantConnect.Data.Market;
 using QuantConnect.Logging;
 
@@ -39,7 +41,8 @@ namespace QuantConnect.Tests.Brokerages.Alpaca
             var secretKey = Config.Get("alpaca-secret-key");
             var tradingMode = Config.Get("alpaca-trading-mode");
 
-            _brokerage = new AlpacaBrokerage(null, null, keyId, secretKey, tradingMode, true);
+            var aggregator = new Mock<IDataAggregator>();
+            _brokerage = new AlpacaBrokerage(null, null, keyId, secretKey, tradingMode, true, aggregator.Object);
             _brokerage.Connect();
         }
 
@@ -55,31 +58,26 @@ namespace QuantConnect.Tests.Brokerages.Alpaca
         {
             var brokerage = _brokerage;
 
-            brokerage.Subscribe(null, new List<Symbol>
+            brokerage.Subscribe(new List<Symbol>
             {
                 Symbol.Create("AAPL", SecurityType.Equity, Market.USA),
                 Symbol.Create("FB", SecurityType.Equity, Market.USA),
             });
 
-            brokerage.Subscribe(null, new List<Symbol>
+            brokerage.Subscribe(new List<Symbol>
             {
                 Symbol.Create("TSLA", SecurityType.Equity, Market.USA),
                 Symbol.Create("MSFT", SecurityType.Equity, Market.USA),
             });
 
-            brokerage.Subscribe(null, new List<Symbol>
+            brokerage.Subscribe(new List<Symbol>
             {
                 Symbol.Create("GOOGL", SecurityType.Equity, Market.USA),
             });
 
             Thread.Sleep(20000);
 
-            foreach (var tick in brokerage.GetNextTicks())
-            {
-                Log.Trace("{0}: {1} - {2} / {3}", tick.Time, tick.Symbol.Value, ((Tick)tick).BidPrice, ((Tick)tick).AskPrice);
-            }
-
-            brokerage.Unsubscribe(null, new List<Symbol>
+            brokerage.Unsubscribe(new List<Symbol>
             {
                 Symbol.Create("AAPL", SecurityType.Equity, Market.USA),
                 Symbol.Create("FB", SecurityType.Equity, Market.USA),
@@ -89,11 +87,6 @@ namespace QuantConnect.Tests.Brokerages.Alpaca
             });
 
             Thread.Sleep(20000);
-
-            foreach (var tick in brokerage.GetNextTicks())
-            {
-                Log.Trace("{0}: {1} - {2} / {3}", tick.Time, tick.Symbol.Value, ((Tick)tick).BidPrice, ((Tick)tick).AskPrice);
-            }
 
             Thread.Sleep(5000);
         }
@@ -111,7 +104,7 @@ namespace QuantConnect.Tests.Brokerages.Alpaca
             var stopwatch = Stopwatch.StartNew();
             foreach (var symbol in symbols)
             {
-                brokerage.Subscribe(null, new List<Symbol>
+                brokerage.Subscribe(new List<Symbol>
                 {
                     Symbol.Create(symbol, SecurityType.Equity, Market.USA),
                 });
@@ -124,7 +117,7 @@ namespace QuantConnect.Tests.Brokerages.Alpaca
             stopwatch.Restart();
             foreach (var symbol in symbols)
             {
-                brokerage.Unsubscribe(null, new List<Symbol>
+                brokerage.Unsubscribe(new List<Symbol>
                 {
                     Symbol.Create(symbol, SecurityType.Equity, Market.USA),
                 });

@@ -24,9 +24,11 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using QuantConnect.Brokerages.Alpaca;
 using QuantConnect.Configuration;
+using QuantConnect.Data;
 using QuantConnect.Interfaces;
 using QuantConnect.Orders;
 using QuantConnect.Securities;
+using QuantConnect.Util;
 
 namespace QuantConnect.Tests.Brokerages.Alpaca
 {
@@ -42,8 +44,9 @@ namespace QuantConnect.Tests.Brokerages.Alpaca
             var keyId = Config.Get("alpaca-key-id");
             var secretKey = Config.Get("alpaca-secret-key");
             var tradingMode = Config.Get("alpaca-trading-mode");
+            var aggregator = Composer.Instance.GetExportedValueByTypeName<IDataAggregator>(Config.Get("data-aggregator", "QuantConnect.Lean.Engine.DataFeeds.AggregationManager"));
 
-            return new AlpacaBrokerage(orderProvider, securityProvider, keyId, secretKey, tradingMode, false);
+            return new AlpacaBrokerage(orderProvider, securityProvider, keyId, secretKey, tradingMode, false, aggregator);
         }
 
         /// <summary>
