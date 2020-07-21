@@ -20,6 +20,7 @@ using System.Linq;
 using NodaTime;
 using QuantConnect.Data;
 using QuantConnect.Data.Market;
+using QuantConnect.Data.UniverseSelection;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Packets;
@@ -244,12 +245,15 @@ namespace QuantConnect.Brokerages.Oanda
         #region IDataQueueHandler implementation
 
         /// <summary>
-        /// Get the next ticks from the live trading data queue
+        /// Adds the specified symbols to the subscription
         /// </summary>
-        /// <returns>IEnumerable list of ticks since the last update.</returns>
-        public IEnumerable<BaseData> GetNextTicks()
+        /// <param name="request">defines the parameters to subscribe to a data feed</param>
+        /// <returns></returns>
+        public IEnumerator<BaseData> Subscribe(SubscriptionRequest request, EventHandler newDataAvailableHandler)
         {
-            return _api.GetNextTicks();
+            Subscribe(new[] { request.Security.Symbol });
+
+            return null;
         }
 
         /// <summary>
@@ -257,19 +261,27 @@ namespace QuantConnect.Brokerages.Oanda
         /// </summary>
         /// <param name="job">Job we're subscribing for:</param>
         /// <param name="symbols">The symbols to be added keyed by SecurityType</param>
-        public void Subscribe(LiveNodePacket job, IEnumerable<Symbol> symbols)
+        public void Subscribe(IEnumerable<Symbol> symbols)
         {
-            _api.Subscribe(job, symbols);
+            _api.Subscribe(symbols);
+        }
+
+        /// <summary>
+        /// Removes the specified symbols to the subscription
+        /// </summary>
+        /// <param name="dataConfig">Subscription config to be removed</param>
+        public void Unsubscribe(SubscriptionDataConfig dataConfig)
+        {
+            Unsubscribe(new Symbol[] { dataConfig.Symbol });
         }
 
         /// <summary>
         /// Removes the specified symbols from the subscription
         /// </summary>
-        /// <param name="job">Job we're processing.</param>
         /// <param name="symbols">The symbols to be removed keyed by SecurityType</param>
-        public void Unsubscribe(LiveNodePacket job, IEnumerable<Symbol> symbols)
+        public void Unsubscribe(IEnumerable<Symbol> symbols)
         {
-            _api.Unsubscribe(job, symbols);
+            _api.Unsubscribe(symbols);
         }
 
         #endregion
