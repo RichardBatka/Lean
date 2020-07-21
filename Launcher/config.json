@@ -42,11 +42,15 @@
   "alpha-handler": "QuantConnect.Lean.Engine.Alphas.DefaultAlphaHandler",
   "data-channel-provider": "DataChannelProvider",
   "object-store": "QuantConnect.Lean.Engine.Storage.LocalObjectStore",
+  "data-aggregator": "QuantConnect.Lean.Engine.DataFeeds.AggregationManager",
 
   // limits on number of symbols to allow
   "symbol-minute-limit": 10000,
   "symbol-second-limit": 10000,
   "symbol-tick-limit": 10000,
+
+  // data aggregator pulse
+  "tick-pulse-delay": 500,
 
   // limits the amount of data points per chart series. Applies only for backtesting
   "maximum-data-points-per-chart-series": 4000,
