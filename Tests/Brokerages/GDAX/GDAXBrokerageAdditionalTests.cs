@@ -20,7 +20,9 @@ using QuantConnect.Algorithm;
 using QuantConnect.Brokerages;
 using QuantConnect.Brokerages.GDAX;
 using QuantConnect.Configuration;
+using QuantConnect.Data;
 using QuantConnect.Logging;
+using QuantConnect.Util;
 using RestSharp;
 
 namespace QuantConnect.Tests.Brokerages.GDAX
@@ -133,8 +135,9 @@ namespace QuantConnect.Tests.Brokerages.GDAX
             var userId = Config.GetInt("job-user-id");
             var userToken = Config.Get("api-access-token");
             var priceProvider = new ApiPriceProvider(userId, userToken);
+            var aggregator = Composer.Instance.GetExportedValueByTypeName<IDataAggregator>(Config.Get("data-aggregator", "QuantConnect.Lean.Engine.DataFeeds.AggregationManager"));
 
-            return new GDAXDataQueueHandler(wssUrl, webSocketClient, restClient, apiKey, apiSecret, passPhrase, algorithm, priceProvider);
+            return new GDAXDataQueueHandler(wssUrl, webSocketClient, restClient, apiKey, apiSecret, passPhrase, algorithm, priceProvider, aggregator);
         }
 
         private static GDAXBrokerage GetBrokerage()
@@ -149,8 +152,9 @@ namespace QuantConnect.Tests.Brokerages.GDAX
             var userId = Config.GetInt("job-user-id");
             var userToken = Config.Get("api-access-token");
             var priceProvider = new ApiPriceProvider(userId, userToken);
+            var aggregator = Composer.Instance.GetExportedValueByTypeName<IDataAggregator>(Config.Get("data-aggregator", "QuantConnect.Lean.Engine.DataFeeds.AggregationManager"));
 
-            return new GDAXBrokerage(wssUrl, webSocketClient, restClient, apiKey, apiSecret, passPhrase, algorithm, priceProvider);
+            return new GDAXBrokerage(wssUrl, webSocketClient, restClient, apiKey, apiSecret, passPhrase, algorithm, priceProvider, aggregator);
         }
     }
 }

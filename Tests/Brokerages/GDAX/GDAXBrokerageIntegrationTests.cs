@@ -22,6 +22,8 @@ using QuantConnect.Orders;
 using Moq;
 using QuantConnect.Brokerages;
 using RestSharp;
+using QuantConnect.Data;
+using QuantConnect.Util;
 
 namespace QuantConnect.Tests.Brokerages.GDAX
 {
@@ -51,10 +53,11 @@ namespace QuantConnect.Tests.Brokerages.GDAX
             algorithm.Setup(a => a.BrokerageModel).Returns(new GDAXBrokerageModel(AccountType.Cash));
 
             var priceProvider = new ApiPriceProvider(Config.GetInt("job-user-id"), Config.Get("api-access-token"));
+            var aggregator = Composer.Instance.GetExportedValueByTypeName<IDataAggregator>(Config.Get("data-aggregator", "QuantConnect.Lean.Engine.DataFeeds.AggregationManager"));
 
             return new GDAXBrokerage(Config.Get("gdax-url", "wss://ws-feed.pro.coinbase.com"), webSocketClient, restClient,
                 Config.Get("gdax-api-key"), Config.Get("gdax-api-secret"), Config.Get("gdax-passphrase"), algorithm.Object,
-                priceProvider);
+                priceProvider, aggregator);
         }
 
         /// <summary>
