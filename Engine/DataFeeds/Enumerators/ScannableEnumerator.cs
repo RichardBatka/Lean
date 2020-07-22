@@ -21,7 +21,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
 {
@@ -38,22 +37,12 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
         private readonly ITimeProvider _timeProvider;
         private readonly EventHandler _newDataAvailableHandler;
 
-        private readonly object _lock = new object();
-        private readonly BlockingCollection<T> _blockingCollection;
+        private readonly ConcurrentQueue<T> _queue;
 
         /// <summary>
         /// Gets the current number of items held in the internal queue
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                lock (_lock)
-                {
-                    return _blockingCollection.Count;
-                }
-            }
-        }
+        public int Count => _queue.Count;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScannableEnumerator{T}"/> class
@@ -67,7 +56,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
             _consolidator = consolidator;
             _timeZone = timeZone;
             _timeProvider = timeProvider;
-            _blockingCollection = new BlockingCollection<T>();
+            _queue = new ConcurrentQueue<T>();
             _newDataAvailableHandler = newDataAvailableHandler ?? ((s, e) => { });
 
             _consolidator.DataConsolidated += (sender, data) =>
@@ -83,10 +72,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
         /// <param name="data">The data to be enqueued</param>
         public void Enqueue(T data)
         {
-            lock (_lock)
-            {
-                _blockingCollection.Add(data);
-            }
+            _queue.Enqueue(data);
         }
 
         /// <summary>
@@ -99,7 +85,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
         public bool MoveNext()
         {
             T current;
-            if (!_blockingCollection.TryTake(out current))
+            if (!_queue.TryDequeue(out current))
             {
                 _current = default(T);
 
@@ -112,7 +98,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                         _consolidator.Scan(localTime);
                     }
 
-                    _blockingCollection.TryTake(out current);
+                    _queue.TryDequeue(out current);
                 }
             }
 
@@ -156,10 +142,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
         /// <filterpriority>2</filterpriority>
         public void Dispose()
         {
-            lock (_lock)
-            {
-                _blockingCollection?.Dispose();
-            }
+
         }
     }
 }
