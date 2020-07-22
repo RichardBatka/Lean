@@ -49,9 +49,6 @@
   "symbol-second-limit": 10000,
   "symbol-tick-limit": 10000,
 
-  // data aggregator pulse
-  "tick-pulse-delay": 500,
-
   // limits the amount of data points per chart series. Applies only for backtesting
   "maximum-data-points-per-chart-series": 4000,
 

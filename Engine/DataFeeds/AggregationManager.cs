@@ -43,33 +43,10 @@ namespace QuantConnect.Lean.Engine.DataFeeds
         public AggregationManager()
         {
             _timeProvider = GetTimeProvider();
-
-            Task.Factory.StartNew(() =>
-            {
-                var delay = Config.GetInt("tick-pulse-delay", 500);
-                while (!_cancellationTokenSource.IsCancellationRequested)
-                {
-                    // the frequency here isn't too important in the sense that each aggregator knows what's is his time to emit
-                    // note that 1 second is the smallest resolution for aggregation
-                    Thread.Sleep(delay);
-                    var Time = _timeProvider.GetUtcNow();
-                    foreach (var item in _consolidators.Values)
-                    {
-                        foreach (var kvp in item)
-                        {
-                            var config = kvp.Key;
-                            var consolidator = kvp.Value;
-                            var localTime = Time.ConvertFromUtc(config.DataTimeZone);
-                            consolidator.Scan(localTime);
-                        }
-                    }
-                }
-            }, TaskCreationOptions.LongRunning);
         }
 
         public IEnumerator<BaseData> Add(SubscriptionDataConfig config, EventHandler newDataAvailableHandler)
         {
-            EnqueueableEnumerator<BaseData> enumerator = new EnqueueableEnumerator<BaseData>();
             IDataConsolidator consolidator;
             var period = config.Resolution.ToTimeSpan();
             switch (config.Type.Name)
@@ -93,11 +70,11 @@ namespace QuantConnect.Lean.Engine.DataFeeds
                     break;
             }
 
-            consolidator.DataConsolidated += (sender, data) =>
-            {
-                enumerator.Enqueue(data as BaseData);
-                newDataAvailableHandler?.Invoke(sender, EventArgs.Empty);
-            };
+            ScannableEnumerator<BaseData> enumerator = new ScannableEnumerator<BaseData>(
+                consolidator, 
+                config.DataTimeZone, 
+                _timeProvider,
+                newDataAvailableHandler);
 
             _consolidators.AddOrUpdate(
                 config.Symbol,
